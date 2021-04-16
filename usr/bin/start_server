@@ -1,0 +1,51 @@
+#!/bin/bash
+
+locale="/usr/skyhard" # your server location
+
+red="\033[0;31m"
+green="\033[1;32m"
+blue="\033[1;34m"
+yellow="\033[1;33m"
+purple="\033[1;35m"
+end_color="\033[0m"
+
+#SERVER
+n_jar="purpur.jar" # name jar(server engine)
+a="-jar" # argument .jar
+ram=(-Xmx20G, -Xms20G) # min, max
+
+#SCREEN
+n_scr="server" # name screen
+a_scr="-dmS" # argument screen
+
+if dpkg list | grep screen < /dev/null; then
+    echo -e "You have screen repository"
+else
+    echo -e "You don't have a screen repository"
+fi
+
+function check_server(){
+    if ps -aux | grep purpur.jar < /dev/null; then
+        echo -e "$green""Server is ON""$end_color"
+    else
+        echo -e "$red""Server is OFF""$end_color"
+        read -rp "Do you want to turn on the server? (Y/N) > " off_server
+        case $off_server in
+            "y")
+                echo -e "$green""Starting the server..""$end_color" && sleep 2 && start_server;
+            ;;
+            "n")
+                echo -e "$red""I understand .. I'll wait until you agree to start""$end_color"
+            ;;
+        esac
+}
+
+function start(){
+    cd $locale
+    clear && screen $a_scr $n_scr java 
+}
+
+# these are arguments to do automatically turn on the server after restarting vds / vps
+case $1 in 
+    start|stop) "$1" ;;
+esac
