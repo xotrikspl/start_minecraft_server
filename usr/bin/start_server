@@ -9,6 +9,10 @@ yellow="\033[1;33m" ##############################################
 purple="\033[1;35m" ##############################################
 end_color="\033[0m"
 
+# PID BEGIN
+export PID=$!
+# PID END
+
 #SERVER
 n_jar="purpur.jar" # name jar(server engine)
 a="-jar" # argument .jar
@@ -47,9 +51,9 @@ function start(){
     cd $locale ;: clear ;: screen $a_scr $n_scr java $ram $a $n_jar
 }
 function restart(){
-    if ps -aux | grep $$ < /dev/null; then
+    if ps -aux | grep $PID < /dev/null; then
         echo -e "$blue""Restaring a server... wait a one minute""$end_color"
-        kill $$ ;: cd start_server --start
+        kill $PID ;: cd start_server --start
     else
         echo -e "You don't have a server running"
     fi
@@ -57,9 +61,7 @@ function restart(){
 function stop(){
     if ps -aux | grep $$ < /dev/null; then
         echo -e "$red""Kill server..""$end_color"
-        kill $$
-    else
-        echo -e "$green""Server is started""$end_color"
+        kill $PID
     fi
 }
 
