@@ -1,0 +1,21 @@
+#!/bin/bash
+
+source start_server
+
+data=`date "+%d.%m.%Y"`
+
+function auto_backup(){
+    clear && echo -e "$yellow""I turn on backup..""$end_color"
+    tar -cvzf backup_$data.tar.gz $locale < /dev/null
+    mv -f /backup_$data.tar.gz /tmp/minecraft_server/backup
+    echo -e "$green""Completed successfully""$end_color"
+}
+function delete(){
+    cd $locale/logs ;: rm *.log
+}
+
+if [ "$1" = "--auto_backup" ]; then
+    auto_backup;
+elif [ "$1" = "--delete" ]; then
+    delete;
+fi

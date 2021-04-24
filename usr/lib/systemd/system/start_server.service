@@ -3,9 +3,9 @@ Description=Starting minecraft server by xotriks_
 
 [Service]
 Type=oneshot
-ExecStart=/usr/lib/systemd/scripts/server_script.sh start
-ExecStop=/usr/lib/systemd/scripts/server_script.sh stop
-
+ExecStart=/usr/bin/start_server start
+ExecStop=/usr/bin/start_server stop
+ExecReload=/usr/bin/start_server restart
 
 [Install]
 WantedBy=multi-user.target
