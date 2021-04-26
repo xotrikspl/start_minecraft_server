@@ -2,79 +2,87 @@
 
 locale="/usr/skyhard" # your server location
 
-red="\033[0;31m" # warning
-green="\033[1;32m" # succes
-blue="\033[1;34m" # info
-yellow="\033[1;33m" ##############################################
-purple="\033[1;35m" ##############################################
+red="\033[0;31m"
+green="\033[1;32m"
+blue="\033[1;34m"
+yellow="\033[1;33m"
+purple="\033[1;35m"
 end_color="\033[0m"
 
-# PID BEGIN
+#---PID BEGIN---#
 export PID=$!
-# PID END
+#---PID END-----#
 
 #SERVER
 n_jar="purpur.jar" # name jar(server engine)
-a="-jar" # argument .jar
-ram=(-Xms500M, -Xmx500M) # min, max
+a="-jar"           # argument .jar
+rams="500M"        # min
+ramx="500M"        # max
 
 #SCREEN
 n_scr="server" # name screen
-a_scr="-dmS" # argument screen
+a_scr="-dmS"   # argument screen
 
 ## check screen
-if dpkg list | grep screen < /dev/null; then
+if dpkg --list | grep screen; then
     echo -e "$green""You have screen repository""$end_color"
 else
     echo -e "$red""You don't have a screen repository""$end_color"
     echo -e "$blue""I install screen""$end_color"
-    apt install screen;
+    apt-get install screen
 fi
 
-## chceck server start
-if ps -aux | grep $n_jar < /dev/null; then
-    echo -e "$green""Server is ON""$end_color"
-else
-    echo -e "$red""Server is OFF""$end_color"
-    read -rp "Do you want to turn on the server? (Y/N) > " off_server
-    case $off_server in
-        "y")
-            echo -e "$green""Starting the server..""$end_color" && sleep 2 && start_server --start;
-        ;;
-        "n")
-            echo -e "$red""I understand .. I'll wait until you agree to start""$end_color"
-        ;;
-    esac
-fi
-
-function start(){
-    cd $locale ;: clear ;: screen $a_scr $n_scr java $ram $a $n_jar
+function start() {
+    cd $locale && clear && screen $a_scr $n_scr java $rams $ramx $a $n_jar
 }
-function restart(){
-    if ps -aux | grep $PID < /dev/null; then
+function restart() {
+    if ps -aux | grep $PID </dev/null; then
         echo -e "$blue""Restaring a server... wait a one minute""$end_color"
-        kill $PID ;: cd start_server --start
+        kill $PID && cd start_server --start
     else
         echo -e "You don't have a server running"
     fi
 }
-function stop(){
-    if ps -aux | grep $$ < /dev/null; then
-        echo -e "$red""Kill server..""$end_color"
-        kill $PID
+function stop() {
+    if ps -aux | grep $$ </dev/null; then
+        echo -e "$red""Kill server..""$end_color" && kill $PID
     fi
 }
 
-## ARGUMENT BEGIN
-function auto_backup{ ## the script runs every 3 days
-    cd /usr/bin/ ;: ./argument_menu --auto_backup
+#---ARGUMENT_BEGIN---#
+
+## the script runs every 3 days
+function backup() {
+    cd /usr/bin/ && ./argument_menu --auto_backup
 }
-function delete_old_logs(){ ## logs deleted every 3 days, backups every 7 days
-    cd /usr/bin ;: ./argument_menu --delete
+## logs deleted every 3 days, backups every 7 days
+function logs_old_backup() {
+    cd /usr/bin && ./argument_menu --delete
 }
-## ARGUMENT END
+
+#---ARGUMENT_END-----#
 
 # These are arguments to do automatically turn on the server after restarting VPS/VDS
-case $1 in 
-    start|stop|restart) "$1" ;;
-esac
+if [ "$1" = "--start" ]; then
+    start;
+elif [ "$1" = "--stop" ]; then
+    stop;
+elif [ "$1" = "--restart" ]; then
+    restart;
+fi
+
+## chceck server start
+if ps -aux | grep $n_jar </dev/null; then
+    echo -e "$green""Server is ON""$end_color"
+else
+    clear && echo -e "$red""Server is OFF""$end_color"
+    read -rp "Do you want to turn on the server? (Y/N) > " off_server
+    case $off_server in
+    "y")
+        echo -e "$green""Starting the server..""$end_color" && sleep 2 && start_server --start
+        ;;
+    "n")
+        echo -e "$red""I understand .. I'll wait until you agree to start""$end_color"
+        ;;
+    esac
+fi

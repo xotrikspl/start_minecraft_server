@@ -1,5 +1,5 @@
 [Unit]
-Description=Starting minecraft server by xotriks_
+Description=script by xotriks_
 
 [Service]
 Type=oneshot
