@@ -4,9 +4,9 @@
     Edit to your settings ;)
         variable > 
                     locale(line 3)
-                    n_jar(line 17)
-                    ram(line 19)
-                    a_scr(line 23)
+                    n_jar(line 13)
+                    ram(line 14)
+                    a_scr(line 18)
 
 # To turn on the server automatically after restarting the server(VPS/VDS) you must do move files
     /usr/lib/systemd/system/start_service.service
@@ -20,6 +20,3 @@
     How to use? Use this method - cd /usr/bin/ && start_server --"type a argument"
         - auto_backup
         - auto_clear_logs
-
-# All errors is save in this location
-    /tmp/minecraft_server

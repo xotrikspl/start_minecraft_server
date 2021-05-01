@@ -9,57 +9,42 @@ yellow="\033[1;33m"
 purple="\033[1;35m"
 end_color="\033[0m"
 
-#---PID BEGIN---#
-export PID=$!
-#---PID END-----#
+#---SERVER BEGIN---#
+n_jar="purpur.jar"        # name jar(server engine)
+ram=(-Xms1G -Xmx1G)      # min, max
+#---SERVER END-----#
 
-#SERVER
-n_jar="purpur.jar" # name jar(server engine)
-a="-jar"           # argument .jar
-rams="500M"        # min
-ramx="500M"        # max
+#---SCREEN BEGIN---#
+a_scr="-dmS"       # argument screen
+#---SCREEN END-----#
 
-#SCREEN
-n_scr="server" # name screen
-a_scr="-dmS"   # argument screen
-
-## check screen
-if dpkg --list | grep screen; then
-    echo -e "$green""You have screen repository""$end_color"
-else
-    echo -e "$red""You don't have a screen repository""$end_color"
-    echo -e "$blue""I install screen""$end_color"
-    apt-get install screen
-fi
-
-function start() {
-    cd $locale && clear && screen $a_scr $n_scr java $rams $ramx $a $n_jar
+function start(){
+    read -p "Enter the name of the server (the name of the server to pass screen) > " n_scr
+    echo -e "$green""Starting ($n_scr)""$end_color"; sleep 1.5
+    cd $locale && clear && screen $a_scr $n_scr java ${ram[*]} -jar $n_jar
+    screen $a_scr $n_scr
 }
-function restart() {
-    if ps -aux | grep $PID </dev/null; then
-        echo -e "$blue""Restaring a server... wait a one minute""$end_color"
-        kill $PID && cd start_server --start
+function restart(){
+    if ps -A | grep $n_jar < /dev/null; then
+        echo -e "$blue""Restaring a server... wait a one second""$end_color"
+        pkill java && cd start_server --start
     else
         echo -e "You don't have a server running"
     fi
 }
-function stop() {
-    if ps -aux | grep $$ </dev/null; then
-        echo -e "$red""Kill server..""$end_color" && kill $PID
+function stop(){
+    if ps -A | grep $n_jar < /dev/null; then
+        echo -e "$red""Kill server..""$end_color" && pkill java
     fi
 }
 
 #---ARGUMENT_BEGIN---#
-
-## the script runs every 3 days
-function backup() {
-    cd /usr/bin/ && ./argument_menu --auto_backup
+function backup(){ ## the script runs every 3 days
+    cd /usr/bin && ./argument_menu --backup
 }
-## logs deleted every 3 days, backups every 7 days
-function logs_old_backup() {
+function logs_old_backup(){ ## logs deleted every 3 days, backups every 7 days
     cd /usr/bin && ./argument_menu --delete
 }
-
 #---ARGUMENT_END-----#
 
 # These are arguments to do automatically turn on the server after restarting VPS/VDS
@@ -72,17 +57,16 @@ elif [ "$1" = "--restart" ]; then
 fi
 
 ## chceck server start
-if ps -aux | grep $n_jar </dev/null; then
+if ps -A | grep $n_jar < /dev/null; then
     echo -e "$green""Server is ON""$end_color"
 else
     clear && echo -e "$red""Server is OFF""$end_color"
     read -rp "Do you want to turn on the server? (Y/N) > " off_server
     case $off_server in
     "y")
-        echo -e "$green""Starting the server..""$end_color" && sleep 2 && start_server --start
-        ;;
+        echo -e "$green""Starting the server..""$end_color" && sleep 2;
+        cd /usr/bin && start_server --start ;;
     "n")
-        echo -e "$red""I understand .. I'll wait until you agree to start""$end_color"
-        ;;
+        echo -e "$red""I understand .. I'll wait until you agree to start""$end_color" ;;
     esac
 fi
