@@ -1,6 +1,8 @@
 #!/bin/bash
 
 locale="/usr/skyhard" # your server location
+locale_backup="/tmp/minecraft_server/backup" # your backup location
+data=$(date "+%d-%m-%Y") # date
 
 red="\033[0;31m"
 green="\033[1;32m"
@@ -9,64 +11,106 @@ yellow="\033[1;33m"
 purple="\033[1;35m"
 end_color="\033[0m"
 
-#---SERVER BEGIN---#
-n_jar="purpur.jar"        # name jar(server engine)
-ram=(-Xms1G -Xmx1G)      # min, max
-#---SERVER END-----#
+#---SERVER BEGIN----#
+jar="purpur.jar"    # name jar(server engine)
+ram=(-Xms1G -Xmx1G) # min, max
+#---SERVER END------#
 
 #---SCREEN BEGIN---#
-a_scr="-dmS"       # argument screen
+scr="-dmS"         # argument screen
+name="server"      # name screen (screen -r server)
 #---SCREEN END-----#
 
-function start(){
+function normal_start(){
     read -p "Enter the name of the server (the name of the server to pass screen) > " n_scr
     echo -e "$green""Starting ($n_scr)""$end_color"; sleep 1.5
-    cd $locale && clear && screen $a_scr $n_scr java ${ram[*]} -jar $n_jar
+    cd $locale && clear && screen $scr $n_scr java ${ram[*]} -jar $jar
     screen $a_scr $n_scr
 }
-function restart(){
-    if ps -A | grep $n_jar < /dev/null; then
+
+#---SERVICE BEGIN---#
+function start_service(){
+    cd $locale && clear && screen $scr $name java ${ram[*]} -jar $jar
+}
+function restart_service(){
+    if ps -A | grep $jar < /dev/null; then
         echo -e "$blue""Restaring a server... wait a one second""$end_color"
-        pkill java && cd start_server --start
+        pkill purpur.jar && cd start_server --start
     else
         echo -e "You don't have a server running"
     fi
 }
-function stop(){
-    if ps -A | grep $n_jar < /dev/null; then
-        echo -e "$red""Kill server..""$end_color" && pkill java
+function stop_service(){
+    if ps -A | grep $jar < /dev/null; then
+        echo -e "$red""Kill server..""$end_color" && pkill purpur.jar
     fi
 }
+#---SERVICE END-----#
 
-#---ARGUMENT_BEGIN---#
+#---ARGUMENT BEGIN---#
+function delete_old_logs(){ ## logs deleted every 3 days
+    echo -e "$yellow""Wait I delete old LOGs""$end_color"
+    find $locale -ctime +3 -type f -name '*.log' -delete
+    echo -e "$green""Completed successfully""$end_color"
+}
+function delete_old_backup(){ ## backup deleted every 7 days
+    echo -e "$yellow""Wait I delete old backups""$end_color"
+    find $locale_backup -ctime +7 -type f -name '*.tar.gz' -delete
+    echo -e "$green""Completed successfully""$end_color"
+}
 function backup(){ ## the script runs every 3 days
-    cd /usr/bin && ./argument_menu --backup
+    delete;
+    clear && echo -e "$yellow""I turn on backup..""$end_color"
+    cd / && tar -cvzf backup_$data.tar.gz $locale </dev/null && sleep 0.75 && clear
+
+        #---CHECK FOLDER--#
+        if [ -x /tmp/minecraft_server ]; then
+            sleep 0.5;
+        else
+            cd /tmp && mkdir minecraft_server;
+            if [ -x /tmp/minecraft_server/backup ]; then
+                sleep 0.5;
+            else
+                cd /tmp/minecraft_server && mkdir backup;
+            fi
+        fi
+
+    cd / && mv -f /backup_$data.tar.gz $locale_backup
+    echo -e "$green""Completed successfully""$end_color"
 }
-function logs_old_backup(){ ## logs deleted every 3 days, backups every 7 days
-    cd /usr/bin && ./argument_menu --delete
-}
-#---ARGUMENT_END-----#
+#---ARGUMENT END-----#
 
 # These are arguments to do automatically turn on the server after restarting VPS/VDS
-if [ "$1" = "--start" ]; then
-    start;
-elif [ "$1" = "--stop" ]; then
-    stop;
-elif [ "$1" = "--restart" ]; then
-    restart;
+#---SERVICE BEGIN---#
+if [ "$1" = "start" ]; then
+    clear && sleep 0.5 && start_service;
+elif [ "$1" = "stop" ]; then
+    clear && sleep 0.5 && stop_service;
+elif [ "$1" = "restart" ]; then
+    clear && sleep 0.5 && restart_service
 fi
+#---SERVICE END-----#
+#---USE TO START_SERVER BEGIN---#
+if [ "$1" = "--start" ] && [ "$1" = "-s"]; then
+    clear && sleep 0.5 && normal_start;
+elif [ "$1" = "--dl" ]; then
+    clear && sleep 0.5 && delete_old_logs;
+elif [ "$1" = "--db" ]; then
+    clear && sleep 0.5 && delete_old_backup
+fi
+#---USE TO START_SERVER END-----#
 
-## chceck server start
-if ps -A | grep $n_jar < /dev/null; then
-    echo -e "$green""Server is ON""$end_color"
+## chceck server
+if ps -A | grep $jar < /dev/null; then
+    clear && sleep 0.5 && echo -e "$green""Server is ON""$end_color"
 else
     clear && echo -e "$red""Server is OFF""$end_color"
     read -rp "Do you want to turn on the server? (Y/N) > " off_server
     case $off_server in
     "y")
         echo -e "$green""Starting the server..""$end_color" && sleep 2;
-        cd /usr/bin && start_server --start ;;
+        start ;;
     "n")
-        echo -e "$red""I understand .. I'll wait until you agree to start""$end_color" ;;
+        clear && echo -e "$red""I understand .. I'll wait until you agree to start""$end_color" ;;
     esac
 fi
