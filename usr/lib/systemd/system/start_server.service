@@ -1,11 +1,10 @@
 [Unit]
-Description=script by xotriks_
+Description=Minecraft server - script by xotriks_
 
 [Service]
-Type=oneshot
-ExecStart=/usr/bin/start_server start
-ExecStop=/usr/bin/start_server stop
-ExecReload=/usr/bin/start_server restart
+ExecStart=start_server --start
+ExecStop=start_server --stop
+ExecReload=start_server --restart
 
 [Install]
 WantedBy=multi-user.target
