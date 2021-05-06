@@ -28,8 +28,8 @@
     To check if the server is active, type the command:
         systemctl status start_server
 
-    This is what a properly turned on server looks like
-![](https://imgur.com/a/VVgxEF1)
+
+![This is what a properly turned on server looks like](https://imgur.com/a/VVgxEF1)
 
 ## Arguments to boot the server
     Use this method - start_server --"type a argument"
