@@ -7,6 +7,12 @@
                     ram(line 14)
                     a_scr(line 18)
 
+## Enable CRONTAB (crontab -e) enter at the end:
+    ### https://crontab.guru/ 
+    0  3 *   * *	start_server --b     <backup every day at 3 am>
+    10 3 */3 * *    start_server --dl    <log deletion every 3 days at 3:10 am>
+    20 3 */7 * *    start_server --db    <backup deletion every 7 days at 3:20 am>
+
 ## To turn on the server automatically after restarting the server(VPS/VDS) you must do move files
     /usr/lib/systemd/system/start_server.service
     CONSOLE > 
@@ -15,7 +21,7 @@
         chmod -R 777 /usr/bin/start_server
         systemctl enable start_server
 ## How to automatically run server?
-    options > start | stop | reload
+    OPTIONS > start | stop | reload
     You have a two options:
         systemctl <OPTIONS> start_server
         service start_server <OPTIONS>
@@ -23,12 +29,12 @@
         systemctl status start_server
     
     This is what a properly turned on server looks like
-        https://imgur.com/a/VVgxEF1
+        ![](https://imgur.com/a/VVgxEF1)
 
 ## Arguments to boot the server
-    You must shut down the server to use these arguments...
-    How to use? Use this method - start_server --"type a argument"
+    Use this method - start_server --"type a argument"
 
+    The comment is general. You can normally use these arguments as given in the example above
     Argument:
         --b     <- daily backups
         --dl    <- logs deleted every 3 days

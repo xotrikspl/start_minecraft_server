@@ -1,8 +1,10 @@
 #!/bin/bash
-version="Beta 0.6"
+version="Beta 0.7"
 
-locale="/usr/skyhard" # your server location
-locale_backup="/tmp/minecraft_server/backup" # your backup location
+locale="usr/skyhard" # server location
+locale_plugins="usr/skyhard/plugins" # server plugins
+locale_backup="tmp/minecraft_server/backup" # backup location
+locale_mysql="tmp/minecraft_server/sql" # mysql backup location
 data=$(date "+%d-%m-%Y_%H-%M-%S") # date
 
 export TERM=xterm
@@ -24,7 +26,19 @@ scr="-DmS"         # argument
 name="server"      # name screen (screen -r server)
 #---SCREEN END-----#
 
-## start_server --start
+#---BACKUP MYSQL BEGIN---#
+database=(test test2 test3 test4)
+#---BACKUP MYSQL END-----#
+
+## check pv and screen
+if dpkg --list | grep screen pv < /dev/null; then
+    sleep 0.5;
+else
+    echo -e "${green}I install pv and screen${end}"
+    apt-get install screen pv -y
+fi
+
+## start_server --run
 function normal_start(){
     read -p "Enter the name of the server (the name of the server to pass screen) > " n_scr
     echo -e "${green}Starting ($n_scr)${end}";
@@ -60,7 +74,7 @@ function stop(){
 function restart(){
     if ps -x | grep $jar < /dev/null; then
         echo -e "${blue}Restaring a server... wait a one second${end}"
-        pkill $jar && cd start_server --run
+        pkill $jar && start_server --start
     else
         echo -e "You don't have a server running"
     fi
@@ -69,35 +83,32 @@ function restart(){
 
 #---ARGUMENT BEGIN---#
 function delete_old_logs(){ ## logs deleted every 3 days
-    echo -e "${yellow}Wait I delete old LOGs${end}"
-    find $locale -ctime +3 -type f -name '*.log' -delete
-    sleep 1 && clear;
-    find $locale -ctime +3 -type f -name '*.log.gz' -delete
+    find $locale_plugins -atime +3 -type f -name '*.log' -delete && sleep 1 && find $locale -atime +3 -type f -name '*.log.gz' -delete
     echo -e "${green}Completed successfully${end}"
 }
 function delete_old_backup(){ ## backup deleted every 7 days
-    echo -e "${yellow}Wait I delete old backups${end}"
-    find $locale_backup -ctime +7 -type f -name '*.tar.gz' -delete
+    find $locale_backup -atime +7 -type f -name '*.tar.gz' -delete
     echo -e "${green}Completed successfully${end}"
 }
 function backup(){ ## the script runs every 1 days
-    delete;
-    clear && echo -e "${yellow}I turn on backup..${end}"
-    cd / && tar -cvzf backup_$data.tar.gz $locale < /dev/null && sleep 0.75 && clear
+    cd $locale_mysql && mysqldump --databases ${database[*]} > db_backup.sql < /dev/null
 
+    cd / && tar cf - $locale $locale_mysql | pv -s $(($(du -sk $locale | awk '(print $1)') * 1024)) | grep > backup_$data.tar.gz
         #---CHECK FOLDER--#
         if [ -e /tmp/minecraft_server ]; then
             sleep 0.5;
         else
             cd /tmp && mkdir minecraft_server;
-            if [ -e /tmp/minecraft_server/backup ]; then
+            if [ -e $locale_backup ] && [ -e $locale_mysql ]; then
                 sleep 0.5;
             else
-                cd /tmp/minecraft_server && mkdir backup;
+                cd /tmp/minecraft_server && mkdir backup sql
             fi
         fi
 
     cd / && mv -f /backup_$data.tar.gz $locale_backup < /dev/null
+    # find old backup mysql
+    find $locale_mysql -type f -name '*.sql' -delete
     echo -e "${green}Completed successfully${end}"
 }
 #---ARGUMENT END-----#
@@ -117,4 +128,6 @@ elif [ "$1" = "--db" ]; then
     clear && sleep 0.5 && delete_old_backup;
 elif [ "$1" = "--c" ]; then
     clear && sleep 0.5 && check_server;
+elif [ "$1" = "--b" ]; then
+    clear && sleep 0.5 && backup;
 fi
