@@ -1,11 +1,11 @@
 #!/bin/bash
-version="Beta 0.7"
+version="Beta 0.8"
 
 locale="usr/skyhard" # server location
 locale_plugins="usr/skyhard/plugins" # server plugins
-locale_backup="tmp/minecraft_server/backup" # backup location
-locale_mysql="tmp/minecraft_server/sql" # mysql backup location
-data=$(date "+%d-%m-%Y_%H-%M-%S") # date
+locale_backup="tmp_server/minecraft_server/backup" # backup location
+locale_mysql="tmp_server/minecraft_server/sql" # mysql backup location
+data=$(date "+%d-%m-%Y_%H-%M-%S") # time_data
 
 export TERM=xterm
 
@@ -27,11 +27,16 @@ name="server"      # name screen (screen -r server)
 #---SCREEN END-----#
 
 #---BACKUP MYSQL BEGIN---#
-database=(test test2 test3 test4)
+database=(test1 test2 test3 test4)
 #---BACKUP MYSQL END-----#
 
+#---TRANSFER BEGIN---#
+ip="192.168.1.27"
+acc="root"
+#---TRANSFER END-----#
+
 ## check pv and screen
-if dpkg --list | grep screen pv < /dev/null; then
+if dpkg --list | grep screen pv < /dev/null <&1; then
     sleep 0.5;
 else
     echo -e "${green}I install pv and screen${end}"
@@ -51,7 +56,7 @@ function check_server(){
         echo -e "${green}Server is ON${end}"
     else
         echo -e "${red}Server is OFF${end}"
-        read -rep "${purple}Do you want to turn on the server? (Y/N) > " off_server
+        read -p "${purple}Do you want to turn on the server? (Y/N) > " off_server
         case $off_server in
         "y")
             echo -e "${green}Starting the server..${end}" && sleep 2;
@@ -91,25 +96,60 @@ function delete_old_backup(){ ## backup deleted every 7 days
     echo -e "${green}Completed successfully${end}"
 }
 function backup(){ ## the script runs every 1 days
-    cd $locale_mysql && mysqldump --databases ${database[*]} > db_backup.sql < /dev/null
-
-    cd / && tar cf - $locale $locale_mysql | pv -s $(($(du -sk $locale | awk '(print $1)') * 1024)) | grep > backup_$data.tar.gz
         #---CHECK FOLDER--#
-        if [ -e /tmp/minecraft_server ]; then
+        if [ -e /tmp_server ]; then
             sleep 0.5;
         else
-            cd /tmp && mkdir minecraft_server;
-            if [ -e $locale_backup ] && [ -e $locale_mysql ]; then
+            cd / && mkdir tmp_server
+            if [ -e /tmp_server/minecraft_server ]; then
                 sleep 0.5;
             else
-                cd /tmp/minecraft_server && mkdir backup sql
+                cd /tmp_server && mkdir minecraft_server;
+                if [ -e $locale_backup ] && [ -e $locale_mysql ]; then
+                    sleep 0.5;
+                else
+                    cd /tmp_server/minecraft_server && mkdir backup sql
+                fi
             fi
         fi
 
+    cd /$locale_mysql && mysqldump --databases ${database[*]} > db_backup.sql < /dev/null
+    cd / && tar cf - $locale $locale_mysql | pv -s $(($(du -sk $locale | awk '{print $1}') * 1024)) | grep > backup_$data.tar.gz
     cd / && mv -f /backup_$data.tar.gz $locale_backup < /dev/null
     # find old backup mysql
     find $locale_mysql -type f -name '*.sql' -delete
     echo -e "${green}Completed successfully${end}"
+}
+# 12 MAY 2021 - Please do not use this argument, I need to correct it
+function transfer(){
+    find $locale_backup -atime +3 -type f -name '*.tar.gz' | $acc@$ip <<T
+        put 
+T
+}
+function raw_transfer(){
+    read -p "Account > " raw_acc && sleep 1 && clear
+    read -p "IP > " raw_ip && sleep 1 && clear
+
+    echo -e "1 ${green} - ${end} one_backup_file"
+ #   echo -e "2 ${green} - ${end} "
+ #   echo -e "3 ${green} - ${end} "
+
+    read -p "Select options: " raw_options
+    case $raw_options in 
+        1*) # one backup file
+        cd $locale_backup && echo "${purple}The name should look like this - backup_data.tar.gz${end}" 
+        read -p "Enter a backup name > " bpf
+        sftp $raw_acc@$raw_ip <<RAW
+            put $bpf
+RAW
+        ;;
+        2*)
+        
+        ;;
+        3*)
+        ;;
+        *) echo "${red}There is no such option${end}"
+    esac
 }
 #---ARGUMENT END-----#
 
@@ -120,6 +160,7 @@ elif [ "$1" = "--stop" ]; then
     clear && sleep 0.5 && stop;
 elif [ "$1" = "--restart" ]; then
     clear && sleep 0.5 && restart;
+#
 elif [ "$1" = "--run" ]; then
     clear && sleep 0.5 && normal_start;
 elif [ "$1" = "--dl" ]; then
@@ -130,4 +171,8 @@ elif [ "$1" = "--c" ]; then
     clear && sleep 0.5 && check_server;
 elif [ "$1" = "--b" ]; then
     clear && sleep 0.5 && backup;
+elif [ "$1" = "--tb" ]; then
+    clear && sleep 0.5 && transfer;
+elif [ "$1" = "--rt" ]; then
+    clear && sleep 0.5 && raw_transfer;
 fi

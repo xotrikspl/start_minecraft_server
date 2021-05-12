@@ -6,5 +6,7 @@ ExecStart=start_server --start
 ExecStop=start_server --stop
 ExecReload=start_server --restart
 
+Restart=always
+
 [Install]
 WantedBy=multi-user.target

@@ -40,3 +40,7 @@ This is what a properly turned on server looks like
         --dl    <- logs deleted every 3 days
         --db    <- backup deleted every 7 days
         --c     <- checking if the server is on
+
+    TEST VERSION:
+        --tb    <- moving the last three backups to another server
+        --rt    <- transfer any files
